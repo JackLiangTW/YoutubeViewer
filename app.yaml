@@ -1,0 +1,5 @@
+runtime: nodejs10
+
+network:
+  session_affinity: true
+# [END appengine_websockets_yaml]

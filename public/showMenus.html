@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script>
+  <script async src="https://www.instagram.com/embed.js"></script>        
+</head>
+<style>
+.inUrl{
+    width: 400px;
+}
+#datas button{
+    padding: 4px 12px;
+    background: red;
+    color: #fff;
+    font-weight: bold;
+}
+.selected{
+    /* border: 1px blue solid; */
+    background: pink;
+}
+.selected>input{
+    color: blue;
+    font-weight: bold;
+}
+</style>
+<body>
+    <div id="Controls">
+        <div id="btns">
+            <p>
+
+            </p>
+            <p>
+                <button onclick="UpdateBackDB()">送出修改回DB</button>
+                <button>還原</button>                
+                <button onclick="addItem()">增加Item</button>
+            </p>
+            <p> 
+                <button onclick="MoveItem('dis')">Item(s)取消選取</button>
+                <button onclick="MoveItem('bottom')">Item(s)到最後</button>
+                <button onclick="MoveItem('top')">Item(s)到最前</button>
+                <button onclick="MoveItem('next')">Item(s)往下1</button>
+                <button onclick="MoveItem('last')">Item(s)往上1</button>
+            </p>
+            <p>
+                <select name="" id="">
+                    
+                </select>
+            </p>
+        </div>
+        <div id="datas">
+
+        </div>        
+    </div>        
+    <script>
+    GetMenus();
+    let GetDataArr;
+    let NB=-1;    
+    let SelectedItem=[];
+    $(document).on("click",'.items',async function(){        
+        let ctn=$("#datas p").index($(this))+1;
+        $(this).toggleClass('selected');
+        if($(this).hasClass('selected')){
+            SelectedItem.push(ctn);
+            SelectedItem.sort(function(a, b) {return a - b;});
+        }
+        else{SelectedItem.remove(ctn)}
+        console.log(SelectedItem);        
+    });
+    $(document).on("click",'#btns>p:first-child button',async function(){
+        let KEYS=$(this).attr('key');
+        NB=KEYS;
+        console.log(KEYS);
+        console.log(GetDataArr);
+        $('#datas').empty();
+        $('#datas').append(`
+        <p>${GetDataArr[KEYS].date} / ${GetDataArr[KEYS].kind}</p>
+        `);
+        for (let i = 0; i < GetDataArr[KEYS]['data'].length; i++) {            
+            let TAGS="";
+            for (let a = 0; a < GetDataArr[KEYS]['data'][i]['tags'].length; a++){
+                if(a!=0)TAGS=TAGS+`,${GetDataArr[KEYS]['data'][i]['tags'][a]}`
+                else{
+                    TAGS=TAGS+`${GetDataArr[KEYS]['data'][i]['tags'][a]}`
+                }
+            }
+            $('#datas').append(`
+                <p class="items">
+                    <input type="text" key="name" value="${GetDataArr[KEYS]['data'][i]['name']}">
+                    <input type="text" key="tags" value="${TAGS}">
+                    <input class="inUrl" type="text" key="url" value="${GetDataArr[KEYS]['data'][i]['url']}">                    
+                    <button>移除</button>
+                </p>
+            `);
+        }                    
+    });
+    $(document).on("click",'.items>button',async function(){
+        $(this).parent('p').remove();
+    });
+    function GetMenus(){//ajax得到 DB該天PO文data         
+        return new Promise(function(resolve, reject) {
+            $.ajax({//初始化 抓今日data
+                url: `/getAllmenu`,
+                type:'GET',        
+                dataType: "json",
+                success: function(result){       
+                    console.log(result);
+                    GetDataArr=result;
+                    RenderUI(result);
+                }}
+            );
+        });
+    }
+    function RenderUI(data){
+        for (let i = 0; i < data.length; i++) {
+            const element = data[i];
+            $('#btns>p:first-child').append(`
+                <button key=${i}>${data[i]['kind']}</button>
+            `);
+        }
+    }
+    function addItem(){        
+        $('#datas').append(`
+            <p class="items">                
+                <input type="text" key="name" value="">
+                <input type="text" key="tags" value="">
+                <input class="inUrl" type="text" key="url" value="">
+                <button>移除</button>
+            </p>
+        `);
+        $('#datas>p:last-child').insertBefore("#datas>p:first-child");//放到第一個
+    }
+    function UpdateBackDB(){
+        let OBJ={
+            data:[],
+            date:GetToday(),
+            kind:GetDataArr[NB]['kind'],
+        }        
+        let ITEM=$('#datas>p.items').length;        
+        for (let i = 0; i < ITEM; i++) {            
+            let OBJlittle={
+                name:$('#datas>p.items').eq(i).children('input[key="name"]').val(),
+                tags:$('#datas>p.items').eq(i).children('input[key="tags"]').val().split(','),
+                url:$('#datas>p.items').eq(i).children('input[key="url"]').val(),                
+            };            
+            OBJ.data.push(OBJlittle);
+        }
+        console.log(OBJ);
+        $.ajax({//初始化 抓今日data
+                url: `/UpdateMenu`,
+                type:'POST',
+                contentType:"application/json",
+                dataType:"json",
+                data:JSON.stringify(OBJ),
+                timeout:0,
+                success: function(result){       
+                    console.log(result);
+                    alert(result.data);
+                }}
+        );
+    }
+    function GetToday(){
+        //new Date().getTime()//給絕對時間
+        let dd = new Date();    
+        let years=dd.toString().slice(11,15);
+        let month=dd.getMonth()+1;//會比真實月份-1
+        let days=dd.toString().slice(8,10);
+        let out=`${years},${month},${days}`
+        return out;
+    }
+    function MoveItem(KIND){        
+        if(KIND=='dis'){
+            $("#datas p").removeClass('selected');
+            SelectedItem=[];
+        }else{
+            var nowArr=[...SelectedItem];                        
+            if(KIND=='top'||KIND=='next')SelectedItem.sort(function(a, b) {return b - a;});
+            else{SelectedItem.sort(function(a, b) {return a - b;})}
+            console.log(KIND);            
+            for (let i = 0; i < SelectedItem.length; i++) { 
+                console.log(SelectedItem);
+                // console.log(nowArr);
+                if(KIND=='top'){
+                    $('#datas>p.selected').eq($('#datas>p.selected').length-1).insertBefore("#datas>p:nth-child(2)");
+                }
+                else if(KIND=='bottom'){                    
+                    $('#datas>p.selected').eq(0).insertAfter("#datas>p:last-child");
+                }
+                else if(KIND=='next'){
+                    if(SelectedItem[i]!=$('#datas>p').length&&nowArr.includes(SelectedItem[i]+1)==false){
+                        $(`#datas>p:nth-child(${SelectedItem[i]})`).insertAfter(`#datas>p:nth-child(${SelectedItem[i]+1})`);                        
+                        nowArr.push(SelectedItem[i]+1);
+                        nowArr.remove(SelectedItem[i]);
+                    }
+                }
+                else if(KIND=='last'){
+                    if(SelectedItem[i]!=2&&nowArr.includes(SelectedItem[i]-1)==false){
+                        $(`#datas>p:nth-child(${SelectedItem[i]})`).insertBefore(`#datas>p:nth-child(${SelectedItem[i]-1})`);
+                        nowArr.push(SelectedItem[i]-1);
+                        nowArr.remove(SelectedItem[i]);
+                    }                    
+                }
+            }
+            if(KIND=='bottom'||KIND=='top'){
+                var divs = document.querySelectorAll('#datas>p.selected');
+                var arr=[];
+                for(var i=0;i<divs.length;i++){
+                    arr.push($("#datas>p").index(divs[i])+1);
+                }
+                console.log(arr);
+                SelectedItem=arr;
+            }else{
+                SelectedItem=nowArr;
+            }
+        }
+    }
+    Array.prototype.remove = function() {    
+        var what, a = arguments, L = a.length, ax;
+        while (L && this.length) {
+            what = a[--L];      
+            while ((ax = this.indexOf(what)) !== -1) {
+                this.splice(ax, 1);
+            }
+        }
+        return this;
+    };
+    </script>
+</body>
+</html>

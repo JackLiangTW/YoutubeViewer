@@ -1,0 +1,27 @@
+{
+  "name": "Amy Music",
+  "short_name": "Amy Music",
+  "description": "The app can play youtube video",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#5f9ea0",
+  "background_color": "#5f9ea0",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./img/logo180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "./img/logo144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "./img/logo62.png",
+      "sizes": "62x62",
+      "type": "image/png"
+    }
+  ]
+}

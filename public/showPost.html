@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>AmyMusic</title>
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./img/favicon.ico">
+    <link rel="apple-touch-icon" sizes="144x144" href="./img/logo144.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./img/logo180.png">
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+  <script async src="https://www.instagram.com/embed.js"></script>
+  <!-- For 前端 圖片s壓縮檔製作 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.3.0/jszip.js"></script>
+  <script src="https://cdn.bootcss.com/FileSaver.js/1.3.8/FileSaver.js"></script>
+  <script src="./js/zipimg.js"></script>
+  <!-- For 前端 圖片s壓縮檔製作 -->
+</head>
+<style>
+
+</style>
+<body>
+    <div id="Controls">
+        <form action="" id="SearchPannel">
+            <input type="text" placeholder="搜尋影片" value="">
+            <div id="SuggestList">
+
+            </div>
+            <select name="" id="SearchType">
+                <option value="relevance">最相關</option>
+                <option value="date">最新</option>
+                <option value="viewCount">觀看最多</option>
+                <option value="rate">評分最高</option>
+                <option value="channel">頻道</option>
+            </select>
+            <button type="submit">搜尋影片</button>
+        </form>
+        <p>
+            <!--篩選類別: <span id="SelectName">全部</span> -->
+            <p id="SocialKind">
+                <button class="Radius" onclick="GetTodayKindData('intro')">說明</button>
+                <button class="Radius" onclick="GetShareList()">分享區</button>
+                <button class="Radius ISactive" onclick="GetTodayKindData('YtM-men')">華語男歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-girl')">華語女歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-group')">華語團體</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-WestMen')">西洋男歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-WestGirl')">西洋女歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-WestGroup')">西洋團體</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-JpMen')">日本男歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-JpGirl')">日本女歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-JpGroup')">日本團體</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-KrMen')">韓國男歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-KrGirl')">韓國女歌手</button>
+                <button class="Radius" onclick="GetTodayKindData('YtM-KrGroup')">韓國團體</button>
+                <!-- <button class="Radius" onclick="GetTodayKindData('YtM-world')">Amy國際音樂精選</button> -->
+                <!-- <button class="Radius" onclick="GetTodayKindData('YoutubeMusic2')">AmyMusic精選</button> -->
+                <!-- <button class="Radius" onclick="GetTodayKindData('YtTrending')">Youtube發燒影片</button> -->
+                <button class="Radius" onclick="RenderTrendingApiBtn()">發燒影片</button>
+                <button class="Radius" onclick="GetTodayKindData('YtMusicSort')">YoutubeMusic精選</button>
+                <button class="Radius" onclick="GetTodayKindData('YoutubeLive')">YoutubeLive</button>
+            </p>
+            <!-- <button onclick="GroupClick(-1)">全部</button> -->
+            <p id="ClassBtns">
+
+            </p>
+            <p id="SubClassBtns">
+
+            </p>
+            <p id="SelectShow">
+                <button class="Radius" key='nb' >時間新</button>
+                <button class="Radius ISactive" key='likes'>讚數多</button>
+                <button class="Radius" key='msg'>留言數多</button>
+            </p>
+        </p>
+        <p id="PostClassSelect">
+            <button class="Radius" id="btnDownLoad" onclick="DoZip()">下載圖片zip</button>
+            <button id="NormalClass" class="Radius classchoose ISactive" onclick="ShowClass('normal')">圖文區</button>
+            <button id="ShareClass" class="Radius classchoose" onclick="ShowClass('share')">影片區</button>
+        </p>
+    </div>
+    <div id="Outer">
+
+    </div>
+    <div id="YtInfinityPlayer" class="">
+
+    </div>
+    <div id="GoTop" class="Rounds">
+        Top
+    </div>
+    <div id="FixedMenuBtn" class="Rounds ">
+        選單
+    </div>
+    <div id="OpenFixedPlayer" class="Rounds ">
+        撥放器
+    </div>
+    <div id="ToggleShareContentArea" onclick="CloseShareContent()" class="Rounds">
+        聊天室
+    </div>
+    <div id="blocks">
+        <p>載入資料中....<br><br>(圖片載入會因網路速度不同而需要不同時間)</p>
+    </div>
+    <div id="ShareContentArea" class="">
+        <span>聊天室</span>
+        <button onclick="CloseShareContent()">X</button>
+        <div class="datas">
+                <p class="Other">
+                    <span>歡迎來到 - 分享/聊天區
+                        <br>可以勾選"分享歌單"來分享自己的"自訂歌單"給所有人
+                    </span>
+                </p>
+                <p class="Other">
+                    <span>
+                        也可以點擊每則"留言"旁邊"►"按鈕撥放該歌單
+                    </span>
+                </p>
+                <p class="Other">
+                    <span>Amy台灣流行音樂精選</span>
+                    <button key="0" class="PlayShareList">►</button>
+                </p>
+                <p class="Other">
+                    <span>Amy西洋流行音樂精選</span>
+                    <button key="1" class="PlayShareList">►</button>
+                </p>
+        </div>
+        <p>
+            <input type="text" placeholder="說些什麼" id="says">
+            <button id="ShareListBtnAttr">分享歌單</button>
+            <button id="SendSays">送出</button>
+        </p>
+    </div>
+    <div id="DoDownload">
+        <p>製作中....</p>
+        <span>0%</span>
+    </div>
+    <div id="DoInstall">
+        <img src="./img/logo62.png" alt="">
+        <button onclick="TriggerInstall()">安裝AmyMusic</button>
+        <button onclick="CloseInstallAlert()">X</button>
+    </div>
+    <script src="./js/PWA.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="./js/YtSocketShareList.js"></script>
+    <script src="./js/YtCookie.js"></script>
+    <script src="./js/BrowserInView.js"></script>
+    <script src="./js/YtEmbed.js"></script>
+    <script src="./js/index.js"></script>
+    <script src="./js/SearchSuggest.js"></script>
+
+</body>
+</html>

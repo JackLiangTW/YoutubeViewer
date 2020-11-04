@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script>
+
+  <!-- For 前端 圖片s壓縮檔製作 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.3.0/jszip.js"></script>
+  <script src="https://cdn.bootcss.com/FileSaver.js/1.3.8/FileSaver.js"></script>
+  <script src="./js/zipimg.js"></script>   
+  <!-- For 前端 圖片s壓縮檔製作 -->
+
+</head>
+<style>
+body{
+    margin: 0;
+    padding: 0;        
+}
+#urls{
+    width: 250px;
+}
+img{
+    max-width: 100%;
+    height: auto;
+}
+</style>
+<body>
+    <div id="Controls">
+        <p>
+            請輸入爬蟲網址:
+            <br>FaceBook:公開"社團"/"粉絲專頁"||IG公開帳號||Twitter公開帳號
+        </p>
+        <input id="urls" placeholder="請輸入網址" type="text">
+        <select id="kind">
+            <option value="photos">爬Facebook相簿</option> 
+            <option value="post">爬Facebook貼文</option> 
+          </select>
+        <button id="send">送出</button>     
+        <button onclick="DoZip()">下載所有圖片.zip</button>
+        <!-- <p>
+            <span>推薦熱搜:</span>
+            <select>
+                <option value="fbFanGroup">FB公開粉絲團</option>
+                <option value="fbGroup">FB公開社團</option>                
+                <option value="ig">IG公開</option>
+                <option value="twiter">Twiter公開</option>
+            </select>
+            <select>
+                <option value="girls">妹子</option>
+                <option value="news">新聞</option>                
+            </select>
+        </p> -->
+    </div>
+    <div id="Outer"> 
+        
+    </div>
+    <div id="blocks">
+        <p>爬蟲中....</p>
+    </div>
+    <div id="DoDownload">
+        <p>製作中....</p>
+        <span>0%</span>
+    </div>
+    <script>
+    let PostKind='';
+    let IMGS=[];
+    $('#send').on('click',async function(){
+        $('#blocks').css('display','block');
+        IMGS=[];
+        PostKind=$( "#kind" ).val();        
+        const urr=$( "#urls" ).val();
+        const RESULT=await DoACrawler(urr,PostKind);
+        console.log(RESULT);        
+        //console.log(RESULT.data.data_txt.length);
+        if(RESULT.data.data_txt.length!=0)showDatas(RESULT.data.data_txt,RESULT.data.err);
+        else{
+            console.log(RESULT.data.err);
+            if(RESULT.data.err!=null)alert(RESULT.data.err)
+            else{alert('找尋不到相關PO文，請確認類別是否輸入正確!!')}
+        }
+        $('#blocks').css('display','none');
+    });
+    function DoACrawler(a,b){//ajax執行爬蟲 爬當下資料
+        return new Promise(function(resolve, reject) {
+            $.ajax({
+                url: "/DoACrawler",                
+                type:'POST',
+                contentType:"application/json",
+                dataType:"json",
+                data:JSON.stringify({ 
+                    urls:a,
+                    kind:b 
+                }),
+                timeout:0,           
+                success: function(result){                       
+                    resolve(result);                
+                },
+                error:function(err){
+                    //console.log(err);
+                    resolve(err);
+                }
+            });
+        });
+    }
+    function showDatas(ds,TheKind){        
+        //$('#urls').val('');
+        $('#Outer').empty();
+        var Urlss=$( "#urls" ).val();  
+        if(TheKind=="fbFanGroup"||TheKind=="fbGroup"){//&&ds!=null
+            for(var i=0;i<ds.length;i++){
+                if(ds[i]!=false){//如果該篇 沒有被刪除
+                    let lks='';
+                    let TheImg='';
+                    if(ds[i].content!=null)lks=ds[i].content;  
+                    if(ds[i]['img-src']!=null)TheImg=ds[i]['img-src'];
+                    IMGS.push(TheImg);   
+                    $('#Outer').append(`
+                    <div class="PostChap">                                
+                        <a href="${Urlss}" target="_blank">
+                            <p>${ds[i].name}</p>
+                            <p>${ds[i].date}</p>
+                            <p>${lks}</p>                    
+                            <img src="${TheImg}">                    
+                            <p>
+                                <span>Likes:${ds[i].likes}</span>
+                                <span>  ||  </span>
+                                <span>${ds[i].msg}</span>
+                            </p>                
+                        </a>
+                    </div>
+                    `);
+                }        
+            }
+        }
+        else if(TheKind=='ig'){//If is IG
+            for(var i=0;i<ds.length;i++){
+                IMGS.push(ds[i][1]);   
+                $('#Outer').append(`
+                    <div class="PostChap">
+                        <a href='https://www.instagram.com/${ds[i][0]}' target="_blank">                                                     
+                        <img src="${ds[i][1]}">
+                    </div>
+                `);
+            }
+        }
+        else if(TheKind=='twiter'||TheKind=='fbImgs'||TheKind=='fbphotos'||TheKind=='gpphotos'){
+            for(var i=0;i<ds.length;i++){
+                IMGS.push(ds[i]);   
+                $('#Outer').append(`
+                    <div class="PostChap">                        
+                        <img src="${ds[i]}">
+                    </div>
+                `);
+            }
+        }
+    }
+    
+
+    </script>
+</body>
+</html>
